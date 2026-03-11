@@ -138,7 +138,8 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
         otpViewModel.loadTokensFromDirectory(this@MainActivity)
 
-        if (lastSync != null) preferencesViewModel.saveLastSync(lastSync)
+        val currentLastSync = preferencesViewModel.currentLastSync.value
+        if (lastSync != null && (currentLastSync == null || lastSync > currentLastSync)) preferencesViewModel.saveLastSync(lastSync)
     }
 
     override fun onResume() {
