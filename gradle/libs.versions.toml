@@ -1,5 +1,5 @@
 [versions]
-agp = "9.0.1"
+agp = "9.1.0"
 androidxJunit = "1.1.3"
 barcodeScanning = "17.3.0"
 cameraCore = "1.5.3"
@@ -8,16 +8,28 @@ commonsCodec = "1.21.0"
 composeUiTooling = "1.5.6"
 converterGson = "3.0.0"
 core = "1.17.0"
+credentials = "1.5.0"
 datastorePreferences = "1.2.0"
 easycrop = "0.1.1"
 espressoCoreVersion = "3.4.0"
 exifinterface = "1.4.2"
 fragmentKtx = "1.8.9"
+googleApiClient = "2.2.0"
+googleApiClientAndroid = "2.9.0"
+googleApiClientAndroidVersion = "2.2.0"
+googleApiServicesDrive = "v3-rev136-1.25.0"
+googleApiServicesDriveVersion = "v3-rev20230822-2.0.0"
+googleGoogleApiServicesDrive = "v3-rev20220815-2.0.0"
+googleHttpClientGson = "2.1.0"
+googleHttpClientGsonVersion = "1.43.3"
+googleOauthClientJetty = "1.39.0"
 kotlin = "2.3.10"
 kotlinxSerializationJson = "1.10.0"
 lifecycleViewmodelCompose = "2.10.0"
 materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.7"
+playServicesAuth = "21.5.1"
+playServicesAuthVersion = "21.0.0"
 playServicesLocation = "21.3.0"
 playServicesWearable = "19.0.0"
 composeBom = "2026.02.00"
@@ -45,6 +57,7 @@ materialVersion = "1.13.0"
 material3 = "1.4.0"
 ui = "1.10.3"
 datastoreCore = "1.2.0"
+googleid = "1.2.0"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
@@ -54,6 +67,7 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 androidx-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "composeUiTooling" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "uiTestJunit4" }
 androidx-compose-ui-tooling = { module = "androidx.wear.compose:compose-ui-tooling", version.ref = "composeUiTooling" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-espresso-core-v340 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
 androidx-junit-v113 = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
@@ -67,10 +81,22 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose"
 core = { module = "androidx.core:core", version.ref = "core" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
+google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClientAndroid" }
+google-api-client-android = { module = "com.google.api-client:google-api-client-android", version.ref = "googleApiClientAndroid" }
+google-api-client-android-v220 = { module = "com.google.api-client:google-api-client-android", version.ref = "googleApiClientAndroidVersion" }
+google-api-client-v220 = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClient" }
+google-api-services-drive = { module = "com.google.apis:google-api-services-drive", version.ref = "googleApiServicesDrive" }
+google-api-services-drive-vv3rev20220815200 = { module = "com.google.apis:google-api-services-drive", version.ref = "googleGoogleApiServicesDrive" }
+google-api-services-drive-vv3rev20230822200 = { module = "com.google.apis:google-api-services-drive", version.ref = "googleApiServicesDriveVersion" }
+google-http-client-gson = { module = "com.google.http-client:google-http-client-gson", version.ref = "googleHttpClientGson" }
+google-http-client-gson-v1433 = { module = "com.google.http-client:google-http-client-gson", version.ref = "googleHttpClientGsonVersion" }
+google-oauth-client-jetty = { module = "com.google.oauth-client:google-oauth-client-jetty", version.ref = "googleOauthClientJetty" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+play-services-auth-v2100 = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuthVersion" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -103,6 +129,7 @@ google-material = { group = "com.google.android.material", name = "material", ve
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

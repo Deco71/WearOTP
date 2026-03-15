@@ -1,5 +1,7 @@
 package com.decoapps.wearotp.mobile.screens
 
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -11,7 +13,7 @@ import com.decoapps.wearotp.mobile.screens.otp.add.AddOTPScreen
 import com.decoapps.wearotp.mobile.screens.settings.SettingsScreen
 
 @Composable
-fun NavigationStack(modifier: Modifier = Modifier) {
+fun NavigationStack(modifier: Modifier = Modifier, authorizationLauncher: ActivityResultLauncher<IntentSenderRequest>) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screen.OTP.route) {
@@ -28,7 +30,8 @@ fun NavigationStack(modifier: Modifier = Modifier) {
         }
         composable(route = Screen.Settings.route) {
             SettingsScreen(
-                navController
+                navController,
+                authorizationLauncher
             )
         }
         composable(route = Screen.AddOTPManually.route) {

@@ -1,0 +1,8 @@
+# only needed for google drive integration
+google_web_client_id=
+
+#If you want to change the default debug keystore, using default instead
+debug_keystore_path=
+debug_keystore_password=
+debug_key_alias=
+debug_key_password=android

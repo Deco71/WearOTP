@@ -1,7 +1,9 @@
 package com.decoapps.wearotp.mobile.screens.settings
 
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,21 +40,29 @@ import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.R
 import com.decoapps.wearotp.mobile.data.PreferencesViewModel
 import com.decoapps.wearotp.mobile.data.syncData
+import com.decoapps.wearotp.mobile.drive.login
 import com.decoapps.wearotp.mobile.theme.ColorMode
+import kotlinx.coroutines.launch
+import com.decoapps.wearotp.mobile.BuildConfig
+import com.decoapps.wearotp.mobile.drive.DriveServiceHelper
+import com.decoapps.wearotp.mobile.drive.DriveServiceHelper.Companion.getDriveService
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, authorizationLauncher: androidx.activity.result.ActivityResultLauncher<androidx.activity.result.IntentSenderRequest>) {
     val preferencesViewModel: PreferencesViewModel =
         viewModel(factory = PreferencesViewModel.Factory)
     val currentColorMode = preferencesViewModel.currentColorMode.collectAsState().value
     val uriHandler = LocalUriHandler.current
     var versionName : String? = null
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
 
     try {
-        versionName = context.getPackageManager()
-            .getPackageInfo(context.getPackageName(), 0).versionName
+        versionName = context.packageManager
+            .getPackageInfo(context.packageName, 0).versionName
     } catch (e: PackageManager.NameNotFoundException) {
         e.printStackTrace()
     }
@@ -136,6 +147,45 @@ fun SettingsScreen(navController: NavController) {
                         )
                         Text(
                             text = "Fix problems by syncing your data manually.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            coroutineScope.launch {
+                                val accessToken = login(webClientId, context, authorizationLauncher)
+                                if (accessToken != null) {
+                                    /*createDriveFile(
+                                        context,
+                                        accessToken,
+                                        "This is a test file created by WatchOTP to verify Google Drive integration."
+                                    )*/
+                                    listAppDataFiles(accessToken)
+                                }
+                            }
+                        }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.github_invertocat_black_clearspace), // TODO Sostituire con icona Google Drive se disponibile
+                        contentDescription = "Google Drive",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Accedi a Google Drive",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "Effettua il login per sincronizzare con Google Drive.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -227,3 +277,30 @@ private fun ThemeOption(
     }
     HorizontalDivider()
 }
+
+suspend fun createDriveFile(context: Context, accessToken: String, content: String) {
+    try {
+        val driveService = getDriveService(accessToken)
+        val helper = DriveServiceHelper(driveService)
+
+        // Create a temporary file with the specified content TODO remove this
+        val testFile = File(context.filesDir, "test_file.txt")
+
+        testFile.writeText(content)
+        helper.createTextFile(testFile)
+    } catch (e: Exception) {
+        Log.e("DRIVE_FILE_CREATION", "Failed during Drive file creation", e)
+    }
+}
+
+suspend fun listAppDataFiles(accessToken: String) {
+    try {
+        val driveService = getDriveService(accessToken)
+        val helper = DriveServiceHelper(driveService)
+        val files = helper.listAppDataFiles()
+        Log.d("DRIVE_FILE_LISTING", "Files in appDataFolder: ${files.joinToString { it.name }}")
+    } catch (e: Exception) {
+        Log.e("DRIVE_FILE_LISTING", "Failed during listing app data files", e)
+    }
+}
+

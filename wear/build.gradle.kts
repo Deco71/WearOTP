@@ -1,9 +1,36 @@
+import java.util.Properties
+import kotlin.collections.component1
+import kotlin.collections.component2
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { stream ->
+        localProperties.load(stream)
+    }
+}
+
+localProperties.forEach { (key, value) ->
+    project.ext.set(key.toString(), value)
+}
+
 android {
+    if (localProperties.getProperty("debug_keystore_path") != null) {
+        signingConfigs {
+            getByName("debug") {
+                storeFile = file(localProperties.getProperty("debug_keystore_path"))
+                storePassword = localProperties.getProperty("debug_keystore_password")
+                keyPassword = localProperties.getProperty("debug_key_password")
+                keyAlias = localProperties.getProperty("debug_key_alias")
+            }
+        }
+    }
     namespace = "com.decoapps.wearotp.wear"
     compileSdk {
         version = release(36) {
@@ -21,7 +48,7 @@ android {
 
     defaultConfig {
         applicationId = "com.decoapps.wearotp"
-        minSdk = 30
+        minSdk = 34
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
