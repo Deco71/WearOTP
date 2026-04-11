@@ -21,17 +21,17 @@ class CryptoManager {
 
     private fun newCipher(): Cipher = Cipher.getInstance(TRANSFORMATION)
 
-    private fun getEncryptCipher(): Cipher {
-        return newCipher().also { it.init(Cipher.ENCRYPT_MODE, getKey(keystoreAlias)) }
+    private fun getEncryptCipher(key: SecretKey = getKey()): Cipher {
+        return newCipher().also { it.init(Cipher.ENCRYPT_MODE, key) }
     }
 
-    private fun getDecryptCipherForNonce(nonce: ByteArray): Cipher {
+    private fun getDecryptCipherForNonce(nonce: ByteArray, key: SecretKey = getKey()): Cipher {
         return newCipher().also {
-            it.init(Cipher.DECRYPT_MODE, getKey(keystoreAlias), GCMParameterSpec(GCM_TAG_LENGTH, nonce))
+            it.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, nonce))
         }
     }
 
-    private fun getKey(alias: String): SecretKey {
+    private fun getKey(alias: String = keystoreAlias): SecretKey {
         return (keystore.getEntry(alias, null) as? KeyStore.SecretKeyEntry)?.secretKey
             ?: createKey(alias).also { key ->
                 keystore.setEntry(alias, KeyStore.SecretKeyEntry(key), null)
@@ -51,6 +51,45 @@ class CryptoManager {
             )
         }.generateKey()
     }
+
+    fun encryptBackup(bytes: ByteArray, outputStream: OutputStream, userKey: String): ByteArray {
+        val salt = generateSalt()
+        val key = deriveKeyFromPassword(ByteBuffer.wrap(userKey.toByteArray()), salt)
+        val encryptCipher = getEncryptCipher(key)
+        val encryptedBytes = encryptCipher.doFinal(bytes)
+        val nonce = encryptCipher.iv
+
+        outputStream.use {
+            it.write(salt.array())
+            it.write(nonce)
+
+            it.write(ByteBuffer.allocate(4).putInt(encryptedBytes.size).array())
+            it.write(encryptedBytes)
+        }
+        return encryptedBytes
+    }
+
+    fun decryptBackup(inputStream: InputStream, userKey: String): ByteArray {
+        return inputStream.use {
+            val keyBuffer = ByteBuffer.wrap(userKey.toByteArray())
+            val salt = ByteArray(SALT_LENGTH) // Assuming salt is 16 bytes
+            it.read(salt)
+
+            val nonce = ByteArray(GCM_NONCE_SIZE)
+            it.read(nonce)
+
+            val key = deriveKeyFromPassword(keyBuffer, ByteBuffer.wrap(salt))
+
+            val encryptedSizeBytes = ByteArray(4)
+            it.read(encryptedSizeBytes)
+            val encryptedBytesSize = ByteBuffer.wrap(encryptedSizeBytes).int
+            val encryptedBytes = ByteArray(encryptedBytesSize)
+            it.read(encryptedBytes)
+
+            getDecryptCipherForNonce(nonce, key).doFinal(encryptedBytes)
+        }
+    }
+
 
     fun encrypt(bytes: ByteArray, outputStream: OutputStream): ByteArray {
         val encryptCipher = getEncryptCipher()
@@ -95,7 +134,7 @@ class CryptoManager {
     }
 
     companion object {
-        private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
+        const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
         private const val BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
         private const val PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
         private const val TRANSFORMATION = "$ALGORITHM/$BLOCK_MODE/$PADDING"
