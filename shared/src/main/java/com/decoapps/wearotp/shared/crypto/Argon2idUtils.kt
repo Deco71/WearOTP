@@ -7,12 +7,11 @@ import java.security.SecureRandom
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 
-val ITERATIONS = 6
-val HASH_LENGTH = 32 //bytes
-val PARALLELISM = 1
-val MEMORY_COST = 65536 //64 MB
-
-val SALT_LENGTH = 16
+const val ITERATIONS = 6
+const val HASH_LENGTH = 32 //bytes
+const val PARALLELISM = 1
+const val MEMORY_COST = 65536 //64 MB
+const val SALT_LENGTH = 16
 
 fun deriveKeyFromPassword(password: ByteBuffer,
                           salt: ByteBuffer,
@@ -37,8 +36,8 @@ fun deriveKeyFromPassword(password: ByteBuffer,
     return SecretKeySpec(hashArray, CryptoManager.ALGORITHM)
 }
 
-fun generateSalt(): ByteBuffer {
+fun generateSalt(): ByteArray {
     val salt = ByteArray(SALT_LENGTH)
     SecureRandom().nextBytes(salt)
-    return ByteBuffer.wrap(salt)
+    return salt
 }

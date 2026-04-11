@@ -2,6 +2,7 @@ package com.decoapps.wearotp.shared.crypto
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -52,42 +53,26 @@ class CryptoManager {
         }.generateKey()
     }
 
-    fun encryptBackup(bytes: ByteArray, outputStream: OutputStream, userKey: String): ByteArray {
+    fun getEncryptBackupCipher(fos: FileOutputStream, userKey: String) : Cipher {
         val salt = generateSalt()
-        val key = deriveKeyFromPassword(ByteBuffer.wrap(userKey.toByteArray()), salt)
+        fos.write(salt)
+
+        val userKeyBuffer = ByteBuffer.allocateDirect(userKey.toByteArray().size).put(userKey.toByteArray()).flip() as ByteBuffer
+        val saltBuffer = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
+        val key = deriveKeyFromPassword(userKeyBuffer, saltBuffer)
         val encryptCipher = getEncryptCipher(key)
-        val encryptedBytes = encryptCipher.doFinal(bytes)
         val nonce = encryptCipher.iv
 
-        outputStream.use {
-            it.write(salt.array())
-            it.write(nonce)
+        fos.write(nonce)
 
-            it.write(ByteBuffer.allocate(4).putInt(encryptedBytes.size).array())
-            it.write(encryptedBytes)
-        }
-        return encryptedBytes
+        return encryptCipher
     }
 
-    fun decryptBackup(inputStream: InputStream, userKey: String): ByteArray {
-        return inputStream.use {
-            val keyBuffer = ByteBuffer.wrap(userKey.toByteArray())
-            val salt = ByteArray(SALT_LENGTH) // Assuming salt is 16 bytes
-            it.read(salt)
-
-            val nonce = ByteArray(GCM_NONCE_SIZE)
-            it.read(nonce)
-
-            val key = deriveKeyFromPassword(keyBuffer, ByteBuffer.wrap(salt))
-
-            val encryptedSizeBytes = ByteArray(4)
-            it.read(encryptedSizeBytes)
-            val encryptedBytesSize = ByteBuffer.wrap(encryptedSizeBytes).int
-            val encryptedBytes = ByteArray(encryptedBytesSize)
-            it.read(encryptedBytes)
-
-            getDecryptCipherForNonce(nonce, key).doFinal(encryptedBytes)
-        }
+    fun getDecryptBackupCipher(userKey: String, salt: ByteArray, nonce: ByteArray): Cipher {
+        val salt = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
+        val userKeyBuffer = ByteBuffer.allocateDirect(userKey.toByteArray().size).put(userKey.toByteArray()).flip() as ByteBuffer
+        val key = deriveKeyFromPassword(userKeyBuffer, salt)
+        return getDecryptCipherForNonce(nonce, key)
     }
 
 
@@ -138,7 +123,8 @@ class CryptoManager {
         private const val BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
         private const val PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
         private const val TRANSFORMATION = "$ALGORITHM/$BLOCK_MODE/$PADDING"
-        private const val GCM_NONCE_SIZE = 12   // 96-bit nonce standard for GCM
+        const val GCM_NONCE_SIZE = 12   // 96-bit nonce standard for GCM
         private const val GCM_TAG_LENGTH = 128 // 128-bit authentication tag
+        const val SALT_LENGTH = 16
     }
 }
