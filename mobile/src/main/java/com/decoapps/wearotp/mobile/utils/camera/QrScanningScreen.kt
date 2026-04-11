@@ -30,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.mobile.R
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -38,6 +40,7 @@ import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
 import com.decoapps.wearotp.mobile.utils.camera.permission.RequireCameraPermission
 import com.decoapps.wearotp.mobile.utils.camera.permission.NeedCameraPermissionScreen
 import com.decoapps.wearotp.shared.data.OtpauthParseResult
+import com.decoapps.wearotp.shared.data.ParseError
 import com.decoapps.wearotp.shared.data.OTPService
 import com.decoapps.wearotp.shared.data.parseOtpauth
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +58,14 @@ fun QrScanningScreen(navController: NavController) {
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val invalidQrCodeText = stringResource(id = R.string.invalid_qr_code)
+    val errorInvalidOtpauthUri = stringResource(id = R.string.error_invalid_otpauth_uri)
+    val errorInvalidOtpauthScheme = stringResource(id = R.string.error_invalid_otpauth_scheme)
+    val errorUnsupportedOtpType = stringResource(id = R.string.error_unsupported_otp_type)
+    val errorMissingAccountLabel = stringResource(id = R.string.error_missing_account_label)
+    val errorMissingSecret = stringResource(id = R.string.error_missing_secret)
+    val errorInvalidDigits = stringResource(id = R.string.error_invalid_digits)
+    val errorInvalidPeriod = stringResource(id = R.string.error_invalid_period)
     val previewView = remember { PreviewView(context) }
     val blockOtherQRs = remember { mutableStateOf(false) }
     val preview = Preview.Builder().build()
@@ -88,11 +99,20 @@ fun QrScanningScreen(navController: NavController) {
                             viewModel.onQrCodeDetected(result, navController)
                         }
                         is OtpauthParseResult.Error -> {
-                            viewModel.onQrCodeNotValid(parsed.message)
+                            val errorText = when (parsed.error) {
+                                ParseError.INVALID_OTPAUTH_URI -> errorInvalidOtpauthUri
+                                ParseError.INVALID_OTPAUTH_SCHEME -> errorInvalidOtpauthScheme
+                                ParseError.UNSUPPORTED_OTP_TYPE -> errorUnsupportedOtpType
+                                ParseError.MISSING_ACCOUNT_LABEL -> errorMissingAccountLabel
+                                ParseError.MISSING_SECRET -> errorMissingSecret
+                                ParseError.INVALID_DIGITS -> errorInvalidDigits
+                                ParseError.INVALID_PERIOD -> errorInvalidPeriod
+                            }
+                            viewModel.onQrCodeNotValid(errorText)
                         }
                     }
                 } else {
-                    viewModel.onQrCodeNotValid("Invalid QR Code")
+                    viewModel.onQrCodeNotValid(invalidQrCodeText)
                 }
             }
         )
@@ -166,7 +186,7 @@ private fun QRCodeReaderBorder(
                     .padding(top = 12.dp)
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = .6f), RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                text = "Scan the QR code provided by your service",
+                text = stringResource(id = R.string.scan_qr_prompt),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Canvas(
@@ -214,7 +234,7 @@ private fun QRCodeReaderBorder(
                 .padding(bottom = 24.dp)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text("Add Manually")
+            Text(stringResource(id = R.string.add_manually))
         }
     }
 }

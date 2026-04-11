@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -102,10 +103,10 @@ fun SettingsScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(id = R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_content_description))
                     }
                 }
             )
@@ -117,34 +118,34 @@ fun SettingsScreen(navController: NavController) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Theme",
+                    text = stringResource(id = R.string.theme_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ThemeOption(
-                    label = "System default",
-                    description = "Follows your device's light/dark setting",
+                    label = stringResource(id = R.string.system_default_label),
+                    description = stringResource(id = R.string.system_default_desc),
                     selected = currentColorMode == ColorMode.SYSTEM.toString(),
                     onClick = { preferencesViewModel.saveColorMode(ColorMode.SYSTEM) }
                 )
                 ThemeOption(
-                    label = "Light",
-                    description = "Always use light theme",
+                    label = stringResource(id = R.string.light_label),
+                    description = stringResource(id = R.string.light_desc),
                     selected = currentColorMode == ColorMode.LIGHT.toString(),
                     onClick = { preferencesViewModel.saveColorMode(ColorMode.LIGHT) }
                 )
                 ThemeOption(
-                    label = "Dark",
-                    description = "Always use dark theme",
+                    label = stringResource(id = R.string.dark_label),
+                    description = stringResource(id = R.string.dark_desc),
                     selected = currentColorMode == ColorMode.DARK.toString(),
                     onClick = { preferencesViewModel.saveColorMode(ColorMode.DARK) }
                 )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     ThemeOption(
-                        label = "Dynamic colors",
-                        description = "Use colors from your wallpaper (Android 12+)",
+                        label = stringResource(id = R.string.dynamic_colors_label),
+                        description = stringResource(id = R.string.dynamic_colors_desc),
                         selected = currentColorMode == ColorMode.DYNAMIC.toString(),
                         onClick = { preferencesViewModel.saveColorMode(ColorMode.DYNAMIC) }
                     )
@@ -153,7 +154,7 @@ fun SettingsScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Syncing",
+                    text = stringResource(id = R.string.syncing_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -165,20 +166,20 @@ fun SettingsScreen(navController: NavController) {
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
+                        Icon(
                         imageVector = Icons.Default.Sync,
-                        contentDescription = "Sync",
+                        contentDescription = stringResource(id = R.string.sync_now),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Sync now",
+                            text = stringResource(id = R.string.sync_now),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Fix problems by syncing your data manually.",
+                            text = stringResource(id = R.string.sync_now_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -268,7 +269,7 @@ fun SettingsScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "About",
+                    text = stringResource(id = R.string.about_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -281,20 +282,20 @@ fun SettingsScreen(navController: NavController) {
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
+                        Icon(
                         painter = painterResource(id = R.drawable.github_invertocat_black_clearspace),
-                        contentDescription = "GitHub",
+                        contentDescription = stringResource(id = R.string.github_content_description),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "View on GitHub",
+                            text = stringResource(id = R.string.view_on_github),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "We are open source! Check us on GitHub.",
+                            text = stringResource(id = R.string.view_on_github_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -305,11 +306,11 @@ fun SettingsScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (versionName != null) {
-                    Text(
-                        text = "Version $versionName",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                            Text(
+                                text = stringResource(id = R.string.version_format, versionName),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                 }
 
                 // Dialog inserimento chiave

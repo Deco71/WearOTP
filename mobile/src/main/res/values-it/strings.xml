@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WearOTP</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="back_content_description">Indietro</string>
+
+    <string name="theme_title">Tema</string>
+    <string name="system_default_label">Predefinito di sistema</string>
+    <string name="system_default_desc">Segue le impostazioni chiaro/scuro del tuo dispositivo</string>
+    <string name="light_label">Chiaro</string>
+    <string name="light_desc">Usa sempre il tema chiaro</string>
+    <string name="dark_label">Scuro</string>
+    <string name="dark_desc">Usa sempre il tema scuro</string>
+    <string name="dynamic_colors_label">Colori dinamici</string>
+    <string name="dynamic_colors_desc">Usa i colori dello sfondo (Android 12+)</string>
+
+    <string name="syncing_title">Sincronizzazione</string>
+    <string name="sync_now">Sincronizza ora</string>
+    <string name="sync_now_desc">Risolvi i problemi sincronizzando manualmente i dati.</string>
+    <string name="sync_successful">Sincronizzazione riuscita!</string>
+    <string name="sync_failed_open_wear">Sincronizzazione fallita! Apri l\'app dello smartwatch almeno una volta.</string>
+    <string name="sync_failed_generic">Sincronizzazione fallita per un errore generico.</string>
+
+    <string name="about_title">Informazioni</string>
+    <string name="view_on_github">Visualizza su GitHub</string>
+    <string name="view_on_github_desc">Siamo open source! Vienici a trovare su GitHub.</string>
+    <string name="github_content_description">GitHub</string>
+
+    <string name="version_format">Versione %s</string>
+
+    <!-- OTP list / screen -->
+    <string name="no_totp_message">Nessun TOTP trovato. Aggiungine uno usando il pulsante.</string>
+
+    <!-- Add manually / form -->
+    <string name="issuer_label">Emittente *</string>
+    <string name="account_label">Account (opzionale)</string>
+    <string name="secret_label">Segreto *</string>
+    <string name="algorithm_label">Algoritmo</string>
+    <string name="digits_label">Numero di caratteri</string>
+    <string name="interval_label">Intervallo</string>
+    <string name="issuer_required">L\'emittente è obbligatorio</string>
+    <string name="secret_required">Il segreto è obbligatorio</string>
+    <string name="secret_invalid_base32">Il segreto deve essere una stringa Base32 valida</string>
+    <string name="cancel">Annulla</string>
+    <string name="add">Aggiungi</string>
+
+    <string name="add_new_otp">Aggiungi nuovo OTP</string>
+
+    <!-- Dialogs / card -->
+    <string name="remove_service_title">Rimuovi servizio</string>
+    <string name="remove_service_confirm">Sei sicuro di voler rimuovere "%1$s"</string>
+    <string name="confirm">Conferma</string>
+    <string name="service_icon_content_description">Icona del servizio</string>
+    <string name="unknown_service">Servizio sconosciuto</string>
+
+    <!-- QR / camera -->
+    <string name="scan_qr_prompt">Scansiona il QR code fornito dal tuo servizio</string>
+    <string name="invalid_qr_code">QR code non valido</string>
+    <string name="add_manually">Aggiungi manualmente</string>
+
+    <!-- Otpauth parser errors -->
+    <string name="error_invalid_otpauth_uri">URI otpauth non valido</string>
+    <string name="error_invalid_otpauth_scheme">Schema otpauth non valido</string>
+    <string name="error_unsupported_otp_type">Tipo OTP non supportato</string>
+    <string name="error_missing_account_label">Manca l\'account</string>
+    <string name="error_missing_secret">Manca il segreto</string>
+    <string name="error_invalid_digits">Numero di cifre non valido</string>
+    <string name="error_invalid_period">Intervallo non valido</string>
+
+    <!-- Camera permission -->
+    <string name="permission_prompt">Concedi il permesso alla fotocamera per usare la funzione di scansione del QR.</string>
+    <string name="request_permission">Richiedi permesso</string>
+    <string name="prefer_add_manually">Se preferisci, puoi aggiungere il tuo OTP manualmente.</string>
+
+</resources>
+

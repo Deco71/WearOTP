@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.wear.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -102,7 +104,7 @@ fun OTPCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Key,
-                        contentDescription = "Service icon",
+                        contentDescription = stringResource(id = R.string.service_icon_content_description),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(16.dp)
                     )
@@ -114,7 +116,7 @@ fun OTPCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = service.issuer ?: "Unknown Service",
+                    text = service.issuer ?: stringResource(id = R.string.unknown_service),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,

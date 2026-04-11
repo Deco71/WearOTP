@@ -25,6 +25,8 @@ import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.ScrollIndicator
 import androidx.wear.compose.material3.ScrollIndicatorColors
 import androidx.wear.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.wear.R
 import com.decoapps.wearotp.shared.utils.formatLastSync
 import com.decoapps.wearotp.wear.data.PreferencesViewModel
 import com.decoapps.wearotp.wear.screens.card.OTPCard
@@ -69,7 +71,7 @@ fun OTPList(modifier: Modifier) {
         ) {
             item {
                 Text(
-                    text = "WearOTP",
+                    text = stringResource(id = R.string.app_name),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -79,7 +81,7 @@ fun OTPList(modifier: Modifier) {
             if (otpServices.isEmpty()) {
                 item {
                     Text(
-                        text = "No TOTP found. Please add one on your mobile app.",
+                        text = stringResource(id = R.string.no_totp_message),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -90,15 +92,15 @@ fun OTPList(modifier: Modifier) {
 
                 if (lastSync == null) {
                     item {
-                        Text(
-                            text = "Open the mobile app once to start automatic synchronization.",
-                            style = MaterialTheme.typography.bodyExtraSmall,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 6.dp)
-                        )
+                                Text(
+                                text = stringResource(id = R.string.open_mobile_once),
+                                style = MaterialTheme.typography.bodyExtraSmall,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 6.dp)
+                            )
                     }
                 }
             } else {
@@ -113,7 +115,7 @@ fun OTPList(modifier: Modifier) {
             if (lastSync != null) {
                 item {
                     Text(
-                        text = "Last Sync: ${formatLastSync(lastSync, context)}",
+                        text = stringResource(id = R.string.last_sync_format, formatLastSync(lastSync, context)),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

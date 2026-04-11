@@ -11,30 +11,40 @@ data class OtpauthFields(
     val interval: Int,
 )
 
+enum class ParseError {
+    INVALID_OTPAUTH_URI,
+    INVALID_OTPAUTH_SCHEME,
+    UNSUPPORTED_OTP_TYPE,
+    MISSING_ACCOUNT_LABEL,
+    MISSING_SECRET,
+    INVALID_DIGITS,
+    INVALID_PERIOD
+}
+
 sealed class OtpauthParseResult {
     data class Success(val fields: OtpauthFields) : OtpauthParseResult()
-    data class Error(val message: String) : OtpauthParseResult()
+    data class Error(val error: ParseError) : OtpauthParseResult()
 }
 
 fun parseOtpauth(otpauth: String): OtpauthParseResult {
     val uri = try {
         Uri.parse(otpauth)
     } catch (_: Throwable) {
-        return OtpauthParseResult.Error("Invalid otpauth URI")
+        return OtpauthParseResult.Error(ParseError.INVALID_OTPAUTH_URI)
     }
 
     if (uri.scheme?.lowercase() != "otpauth") {
-        return OtpauthParseResult.Error("Invalid otpauth scheme")
+        return OtpauthParseResult.Error(ParseError.INVALID_OTPAUTH_SCHEME)
     }
 
     val type = (uri.host ?: uri.authority).orEmpty().lowercase()
     if (type != "totp") {
-        return OtpauthParseResult.Error("Unsupported OTP type")
+        return OtpauthParseResult.Error(ParseError.UNSUPPORTED_OTP_TYPE)
     }
 
     val label = uri.pathSegments.firstOrNull()?.let { Uri.decode(it) }.orEmpty()
     if (label.isBlank()) {
-        return OtpauthParseResult.Error("Missing account label")
+        return OtpauthParseResult.Error(ParseError.MISSING_ACCOUNT_LABEL)
     }
 
     var issuerFromLabel: String? = null
@@ -48,7 +58,7 @@ fun parseOtpauth(otpauth: String): OtpauthParseResult {
     }
 
     val secret = uri.getQueryParameter("secret")?.trim()?.ifBlank { null }
-        ?: return OtpauthParseResult.Error("Missing secret")
+        ?: return OtpauthParseResult.Error(ParseError.MISSING_SECRET)
 
     val issuerQuery = uri.getQueryParameter("issuer")?.trim()?.ifBlank { null }
     val algorithm = uri.getQueryParameter("algorithm")?.trim()?.uppercase()?.ifBlank { "SHA1" } ?: "SHA1"
@@ -56,10 +66,10 @@ fun parseOtpauth(otpauth: String): OtpauthParseResult {
     val period = uri.getQueryParameter("period")?.toIntOrNull() ?: 30
 
     if (digits <= 0) {
-        return OtpauthParseResult.Error("Invalid digits")
+        return OtpauthParseResult.Error(ParseError.INVALID_DIGITS)
     }
     if (period <= 0) {
-        return OtpauthParseResult.Error("Invalid period")
+        return OtpauthParseResult.Error(ParseError.INVALID_PERIOD)
     }
 
     val issuer = issuerQuery ?: issuerFromLabel
