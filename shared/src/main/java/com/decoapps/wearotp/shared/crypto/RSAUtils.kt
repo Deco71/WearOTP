@@ -6,11 +6,22 @@ import android.util.Log
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.PublicKey
+import java.security.interfaces.RSAPrivateKey
+import java.security.spec.MGF1ParameterSpec
 import javax.crypto.Cipher
+import javax.crypto.spec.OAEPParameterSpec
+import javax.crypto.spec.PSource
 
 private const val RSA_TRANSFORMATION = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
+private val OAEP_SPEC = OAEPParameterSpec(
+    "SHA-256",
+    "MGF1",
+    MGF1ParameterSpec.SHA1,
+    PSource.PSpecified.DEFAULT
+)
 
 fun getRSAKeys(): KeyPair? {
     return try {
@@ -31,7 +42,7 @@ fun getRSAKeys(): KeyPair? {
         val spec = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
             .setKeySize(2048)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
-            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+            .setDigests(KeyProperties.DIGEST_SHA1, KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
             .setIsStrongBoxBacked(true)
             .build()
             
@@ -45,12 +56,22 @@ fun getRSAKeys(): KeyPair? {
 
 fun rsaEncrypt(data: String, key: PublicKey): ByteArray {
     val cipher = Cipher.getInstance(RSA_TRANSFORMATION)
-    cipher.init(Cipher.ENCRYPT_MODE, key)
+    cipher.init(Cipher.ENCRYPT_MODE, key, OAEP_SPEC)
     return cipher.doFinal(data.toByteArray(Charsets.UTF_8))
 }
 
 fun rsaDecrypt(data: ByteArray, key: PrivateKey): String {
+    val expectedCiphertextSize = (key as? RSAPrivateKey)?.modulus?.bitLength()?.div(8)
+    if (expectedCiphertextSize != null && data.size != expectedCiphertextSize) {
+        throw IllegalArgumentException("Invalid RSA ciphertext size: got=${data.size}, expected=$expectedCiphertextSize")
+    }
+
     val cipher = Cipher.getInstance(RSA_TRANSFORMATION)
-    cipher.init(Cipher.DECRYPT_MODE, key)
+    cipher.init(Cipher.DECRYPT_MODE, key, OAEP_SPEC)
     return String(cipher.doFinal(data), Charsets.UTF_8)
+}
+
+fun publicKeyId(publicKey: PublicKey): String {
+    val digest = MessageDigest.getInstance("SHA-256").digest(publicKey.encoded)
+    return digest.joinToString("") { "%02x".format(it) }
 }

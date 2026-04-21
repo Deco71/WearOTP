@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import com.decoapps.wearotp.mobile.R
 import com.decoapps.wearotp.shared.crypto.TokenFileManager
+import com.decoapps.wearotp.shared.crypto.publicKeyId
 import com.decoapps.wearotp.shared.crypto.rsaEncrypt
 import com.decoapps.wearotp.shared.data.OTPService
 import com.google.android.gms.wearable.DataMapItem
@@ -54,11 +55,13 @@ fun sendToWearable(context: Context, service: OTPService) {
 
         try {
             val encoder = Base64.getEncoder()
+            val keyId = publicKeyId(publicKey)
             val putDataMapReq = PutDataMapRequest.create("/create-token/${service.id}").apply {
                 // non-sensitive fields
                 dataMap.putString("issuer", service.issuer ?: "")
                 dataMap.putString("accountName", service.accountName ?: "")
                 dataMap.putLong("timestamp", service.lastUpdate)
+                dataMap.putString("keyId", keyId)
 
                 // sensitive fields
                 dataMap.putString("secret", encoder.encodeToString(rsaEncrypt(service.secret, publicKey)))
@@ -70,7 +73,7 @@ fun sendToWearable(context: Context, service: OTPService) {
 
             Wearable.getDataClient(context).putDataItem(request)
                 .addOnSuccessListener {
-                    Log.d("DataEventUtils", "Successfully sent encrypted token to wearable: ${service.id}")
+                    Log.d("DataEventUtils", "Successfully sent encrypted token to wearable: ${service.id}, keyId=$keyId")
                 }
                 .addOnFailureListener {
                     Log.e("DataEventUtils", "Failed to send token to wearable: ${it.message}")
@@ -116,9 +119,11 @@ fun syncData(context: Context) {
         }
         val loadedServices = tokenFileManager.loadEncryptedTokens(TokenFileManager.getTokensDirectory(context.filesDir))
         try {
+            val keyId = publicKeyId(publicKey)
             val putDataMapReq = PutDataMapRequest.create("/sync").apply {
                 dataMap.putLong("timestamp", System.currentTimeMillis())
                 dataMap.putStringArray("allTokenIds", loadedServices.map { it.id }.toTypedArray())
+                dataMap.putString("keyId", keyId)
             }
             val request = putDataMapReq.asPutDataRequest().setUrgent()
 
