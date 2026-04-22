@@ -14,6 +14,7 @@ import javax.crypto.spec.OAEPParameterSpec
 import javax.crypto.spec.PSource
 
 private const val RSA_TRANSFORMATION = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
+private const val RSA_KEY_ALIAS = "rsa_alias"
 private val OAEP_SPEC = OAEPParameterSpec(
     "SHA-256",
     "MGF1",
@@ -23,12 +24,11 @@ private val OAEP_SPEC = OAEPParameterSpec(
 
 fun getRSAKeys(onKeyPairGenerated: ((KeyPair) -> Unit)? = null): KeyPair? {
     try {
-        val alias = "rsa_alias"
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
 
-        if (keyStore.containsAlias(alias)) {
-            val entry = keyStore.getEntry(alias, null) as? KeyStore.PrivateKeyEntry
+        if (keyStore.containsAlias(RSA_KEY_ALIAS)) {
+            val entry = keyStore.getEntry(RSA_KEY_ALIAS, null) as? KeyStore.PrivateKeyEntry
             if (entry != null) {
                 Log.d("RSAUtils", "RSA key pair already exists, retrieving from KeyStore")
                 return KeyPair(entry.certificate.publicKey, entry.privateKey)
@@ -42,21 +42,31 @@ fun getRSAKeys(onKeyPairGenerated: ((KeyPair) -> Unit)? = null): KeyPair? {
 
         Log.d("RSAUtils", "Generating new RSA key pair")
         val keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
-        val spec = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-            .setKeySize(2048)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
-            .setDigests(KeyProperties.DIGEST_SHA1, KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
-            .setIsStrongBoxBacked(true)
-            .build()
-
-        keyPairGenerator.initialize(spec)
-        val keyPair = keyPairGenerator.generateKeyPair()
+        val keyPair = try {
+            keyPairGenerator.initialize(createRsaKeySpec(strongBoxBacked = true))
+            keyPairGenerator.generateKeyPair()
+        } catch (_: Exception) {
+            keyPairGenerator.initialize(createRsaKeySpec(strongBoxBacked = false))
+            keyPairGenerator.generateKeyPair()
+        }
         onKeyPairGenerated(keyPair)
         return keyPair
     } catch (e: Exception) {
         e.printStackTrace()
         return null
     }
+}
+
+private fun createRsaKeySpec(strongBoxBacked: Boolean): KeyGenParameterSpec {
+    return KeyGenParameterSpec.Builder(
+        RSA_KEY_ALIAS,
+        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+    )
+        .setKeySize(2048)
+        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
+        .setDigests(KeyProperties.DIGEST_SHA1, KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+        .setIsStrongBoxBacked(strongBoxBacked)
+        .build()
 }
 
 fun rsaEncrypt(data: String, key: PublicKey): ByteArray {

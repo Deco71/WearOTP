@@ -40,18 +40,26 @@ class CryptoManager {
     }
 
     private fun createKey(alias: String) : SecretKey {
-        return KeyGenerator.getInstance(ALGORITHM).apply {
-            init(
-                KeyGenParameterSpec.Builder(alias,
-                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                    .setBlockModes(BLOCK_MODE)
-                    .setEncryptionPaddings(PADDING)
-                    .setUserAuthenticationRequired(false)
-                    .setIsStrongBoxBacked(true)
-                    .setRandomizedEncryptionRequired(true)
-                    .build()
-            )
-        }.generateKey()
+        val keyGenerator = KeyGenerator.getInstance(ALGORITHM, "AndroidKeyStore")
+        return try {
+            keyGenerator.init(createAesKeySpec(alias = alias, strongBoxBacked = true))
+            keyGenerator.generateKey()
+        } catch (_: Exception) {
+            keyGenerator.init(createAesKeySpec(alias = alias, strongBoxBacked = false))
+            keyGenerator.generateKey()
+        }
+    }
+
+    private fun createAesKeySpec(alias: String, strongBoxBacked: Boolean): KeyGenParameterSpec {
+        return KeyGenParameterSpec.Builder(
+            alias,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(BLOCK_MODE)
+            .setEncryptionPaddings(PADDING)
+            .setIsStrongBoxBacked(strongBoxBacked)
+            .setRandomizedEncryptionRequired(true)
+            .build()
     }
 
     fun getEncryptBackupCipher(fos: FileOutputStream, userKey: String) : Cipher {
