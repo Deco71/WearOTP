@@ -2,6 +2,7 @@ package com.decoapps.wearotp.shared.crypto
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -21,17 +22,17 @@ class CryptoManager {
 
     private fun newCipher(): Cipher = Cipher.getInstance(TRANSFORMATION)
 
-    private fun getEncryptCipher(): Cipher {
-        return newCipher().also { it.init(Cipher.ENCRYPT_MODE, getKey(keystoreAlias)) }
+    private fun getEncryptCipher(key: SecretKey = getKey()): Cipher {
+        return newCipher().also { it.init(Cipher.ENCRYPT_MODE, key) }
     }
 
-    private fun getDecryptCipherForNonce(nonce: ByteArray): Cipher {
+    private fun getDecryptCipherForNonce(nonce: ByteArray, key: SecretKey = getKey()): Cipher {
         return newCipher().also {
-            it.init(Cipher.DECRYPT_MODE, getKey(keystoreAlias), GCMParameterSpec(GCM_TAG_LENGTH, nonce))
+            it.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, nonce))
         }
     }
 
-    private fun getKey(alias: String): SecretKey {
+    private fun getKey(alias: String = keystoreAlias): SecretKey {
         return (keystore.getEntry(alias, null) as? KeyStore.SecretKeyEntry)?.secretKey
             ?: createKey(alias).also { key ->
                 keystore.setEntry(alias, KeyStore.SecretKeyEntry(key), null)
@@ -39,18 +40,50 @@ class CryptoManager {
     }
 
     private fun createKey(alias: String) : SecretKey {
-        return KeyGenerator.getInstance(ALGORITHM).apply {
-            init(
-                KeyGenParameterSpec.Builder(alias,
-                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                    .setBlockModes(BLOCK_MODE)
-                    .setEncryptionPaddings(PADDING)
-                    .setUserAuthenticationRequired(false)
-                    .setRandomizedEncryptionRequired(true)
-                    .build()
-            )
-        }.generateKey()
+        val keyGenerator = KeyGenerator.getInstance(ALGORITHM, "AndroidKeyStore")
+        return try {
+            keyGenerator.init(createAesKeySpec(alias = alias, strongBoxBacked = true))
+            keyGenerator.generateKey()
+        } catch (_: Exception) {
+            keyGenerator.init(createAesKeySpec(alias = alias, strongBoxBacked = false))
+            keyGenerator.generateKey()
+        }
     }
+
+    private fun createAesKeySpec(alias: String, strongBoxBacked: Boolean): KeyGenParameterSpec {
+        return KeyGenParameterSpec.Builder(
+            alias,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(BLOCK_MODE)
+            .setEncryptionPaddings(PADDING)
+            .setIsStrongBoxBacked(strongBoxBacked)
+            .setRandomizedEncryptionRequired(true)
+            .build()
+    }
+
+    fun getEncryptBackupCipher(fos: FileOutputStream, userKey: String) : Cipher {
+        val salt = generateSalt()
+        fos.write(salt)
+
+        val userKeyBuffer = ByteBuffer.allocateDirect(userKey.toByteArray().size).put(userKey.toByteArray()).flip() as ByteBuffer
+        val saltBuffer = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
+        val key = deriveKeyFromPassword(userKeyBuffer, saltBuffer)
+        val encryptCipher = getEncryptCipher(key)
+        val nonce = encryptCipher.iv
+
+        fos.write(nonce)
+
+        return encryptCipher
+    }
+
+    fun getDecryptBackupCipher(userKey: String, salt: ByteArray, nonce: ByteArray): Cipher {
+        val saltBuffer = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
+        val userKeyBuffer = ByteBuffer.allocateDirect(userKey.toByteArray().size).put(userKey.toByteArray()).flip() as ByteBuffer
+        val key = deriveKeyFromPassword(userKeyBuffer, saltBuffer)
+        return getDecryptCipherForNonce(nonce, key)
+    }
+
 
     fun encrypt(bytes: ByteArray, outputStream: OutputStream): ByteArray {
         val encryptCipher = getEncryptCipher()
@@ -81,25 +114,13 @@ class CryptoManager {
         }
     }
 
-    fun encrypt(bytes: ByteArray): ByteArray {
-        val encryptCipher = getEncryptCipher()
-        val nonce = encryptCipher.iv
-        val encrypted = encryptCipher.doFinal(bytes)
-        return nonce + encrypted
-    }
-
-    fun decrypt(bytes: ByteArray): ByteArray {
-        val nonce = bytes.copyOfRange(0, GCM_NONCE_SIZE)
-        val data = bytes.copyOfRange(GCM_NONCE_SIZE, bytes.size)
-        return getDecryptCipherForNonce(nonce).doFinal(data)
-    }
-
     companion object {
-        private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
+        const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
         private const val BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
         private const val PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
         private const val TRANSFORMATION = "$ALGORITHM/$BLOCK_MODE/$PADDING"
-        private const val GCM_NONCE_SIZE = 12   // 96-bit nonce standard for GCM
+        const val GCM_NONCE_SIZE = 12   // 96-bit nonce standard for GCM
         private const val GCM_TAG_LENGTH = 128 // 128-bit authentication tag
+        const val SALT_LENGTH = 16
     }
 }

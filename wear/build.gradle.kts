@@ -50,14 +50,14 @@ android {
         applicationId = "com.decoapps.wearotp"
         minSdk = 34
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -78,7 +78,6 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.material3)
     implementation(libs.play.services.wearable)
-    implementation(libs.androidx.datastore.core)
     implementation(libs.datastore.preferences)
 
     val composeBom = platform("androidx.compose:compose-bom:2026.01.01")

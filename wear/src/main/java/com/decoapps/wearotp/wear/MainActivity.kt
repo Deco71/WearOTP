@@ -1,6 +1,5 @@
 package com.decoapps.wearotp.wear
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -15,12 +14,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.datastore.dataStore
 import androidx.lifecycle.lifecycleScope
 import com.decoapps.wearotp.shared.crypto.TokenFileManager
-import com.decoapps.wearotp.shared.crypto.createRSAKeys
-import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferences
-import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferencesSerializer
+import com.decoapps.wearotp.shared.crypto.getRSAKeys
 import com.decoapps.wearotp.wear.data.PreferencesViewModel
 import com.decoapps.wearotp.wear.data.elaborateDataItem
 import com.decoapps.wearotp.wear.data.publishPublicKey
@@ -34,15 +30,8 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Base64
-
-
-private val Context.dataStore by dataStore(
-    fileName = "crypto",
-    serializer = CryptoPreferencesSerializer
-)
 
 class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
@@ -62,29 +51,14 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         val keysReady = mutableStateOf(false)
 
         lifecycleScope.launch {
-            val prefs = dataStore.data.first()
-            if (prefs.privateKeyBase64 == null || prefs.publicKeyBase64 == null) {
-                val keyPair = createRSAKeys()
-                if (keyPair != null) {
-                    val encoder = Base64.getEncoder()
-                    val publicKeyBase64 = encoder.encodeToString(keyPair.public.encoded)
-                    dataStore.updateData {
-                        CryptoPreferences(
-                            privateKeyBase64 = encoder.encodeToString(keyPair.private.encoded),
-                            publicKeyBase64 = publicKeyBase64
-                        )
-                    }
-                    Log.d("CRYPTO", "RSA keys generated and saved.")
+            getRSAKeys() { generatedKeyPair ->
+                val encoder = Base64.getEncoder()
+                val publicKeyBase64 = encoder.encodeToString(generatedKeyPair.public.encoded)
 
-                    // Publish public key to dataStore to make it available for the mobile app
-                    publishPublicKey(this@MainActivity, publicKeyBase64)
-
-                }
-            } else {
-                Log.d("CRYPTO", "RSA keys already exist.")
+                // Publish public key to dataStore to make it available for the mobile app
+                publishPublicKey(this@MainActivity, publicKeyBase64)
+                keysReady.value = true
             }
-
-            keysReady.value = true
         }
 
         setContent {
@@ -108,8 +82,7 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         }
     }
 
-    private suspend fun processDataItems(items: Iterable<DataItem>) {
-        val cryptoPrefs = dataStore.data.first()
+    private fun processDataItems(items: Iterable<DataItem>) {
         var uriToRemove: List<Uri> = emptyList()
         var lastSync: Long? = null
 
@@ -118,9 +91,8 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
             .sortedBy { it.second }
             .map { it.first }
 
-
         sortedItems.forEach { dataItem ->
-            val successfulSyncTime = elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir), cryptoPrefs)
+            val successfulSyncTime = elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir))
             if (successfulSyncTime != null && dataItem.uri.path?.startsWith("/public-key") == false) {
                 uriToRemove = uriToRemove + dataItem.uri
             }

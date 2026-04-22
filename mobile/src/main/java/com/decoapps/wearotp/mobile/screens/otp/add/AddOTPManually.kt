@@ -21,6 +21,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.mobile.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,19 +71,24 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
     val otpViewModel: OTPViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
     val context = LocalContext.current
 
+    // Preload localized validation messages so they can be used from non-@Composable code below
+    val issuerRequiredText = stringResource(id = R.string.issuer_required)
+    val secretRequiredText = stringResource(id = R.string.secret_required)
+    val secretInvalidBase32Text = stringResource(id = R.string.secret_invalid_base32)
+
     fun validate(): Boolean {
         var valid = true
         if (issuer.isBlank()) {
-            issuerError = "Issuer is required"
+            issuerError = issuerRequiredText
             valid = false
         } else {
             issuerError = null
         }
         if (secret.isBlank()) {
-            secretError = "Secret is required"
+            secretError = secretRequiredText
             valid = false
         } else if (!isValidBase32(secret)) {
-            secretError = "Secret must be a valid Base32 string"
+            secretError = secretInvalidBase32Text
             valid = false
         } else {
             secretError = null
@@ -106,7 +113,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                 TextField(
                     value = issuer,
                     onValueChange = { issuer = it; issuerError = null },
-                    label = { Text("Issuer *") },
+                    label = { Text(stringResource(id = R.string.issuer_label)) },
                     isError = issuerError != null,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -125,7 +132,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
             TextField(
                 value = account,
                 onValueChange = { account = it },
-                label = { Text("Account (optional)") },
+                label = { Text(stringResource(id = R.string.account_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -135,7 +142,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                 TextField(
                     value = secret,
                     onValueChange = { secret = it; secretError = null },
-                    label = { Text("Secret *") },
+                    label = { Text(stringResource(id = R.string.secret_label)) },
                     isError = secretError != null,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -160,7 +167,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                     value = selectedAlgorithm,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Algorithm") },
+                    label = { Text(stringResource(id = R.string.algorithm_label)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = algorithmExpanded) },
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -189,7 +196,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                     value = selectedDigits.toString(),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Digits") },
+                    label = { Text(stringResource(id = R.string.digits_label)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = digitsExpanded) },
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -218,7 +225,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                     value = "${selectedInterval}s",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Interval") },
+                    label = { Text(stringResource(id = R.string.interval_label)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = intervalExpanded) },
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -229,8 +236,8 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                     onDismissRequest = { intervalExpanded = false }
                 ) {
                     SUPPORTED_INTERVALS.forEach { i ->
-                        DropdownMenuItem(
-                            text = { Text("${i}s") },
+                            DropdownMenuItem(
+                                    text = { Text("${i}s") },
                             onClick = { selectedInterval = i; intervalExpanded = false }
                         )
                     }
@@ -244,7 +251,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
             ) {
                 Button(onClick = { navController.popBackStack() }) {
-                    Text("Cancel")
+                    Text(stringResource(id = R.string.cancel))
                 }
                 Button(
                     onClick = {
@@ -266,7 +273,7 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                         }
                     }
                 ) {
-                    Text("Add")
+                    Text(stringResource(id = R.string.add))
                 }
             }
         }

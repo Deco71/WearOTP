@@ -11,12 +11,10 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import java.io.File
-import java.security.KeyFactory
-import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
-import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferences
+import com.decoapps.wearotp.shared.crypto.getRSAKeys
 
-fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPreferences) : Long? {
+fun elaborateDataItem(dataItem: DataItem, tokensDir: File) : Long? {
 
     val tokenFileManager = TokenFileManager()
     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
@@ -26,12 +24,11 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPr
     when {
         dataItem.uri.path?.startsWith("/sync") == true -> {
 
-            val ids = dataMap.getString("allTokenIds")
+            val ids = dataMap.getStringArray("allTokenIds")
 
             if (ids != null) {
-                val idList = ids.split(",").toSet()
                 tokensDir.listFiles()?.forEach { file ->
-                    if (!idList.contains(file.name)) {
+                    if (!ids.contains(file.name)) {
                         tokenFileManager.deleteToken(tokensDir, file.name)
                     }
                 }
@@ -45,29 +42,30 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPr
 
             val id = dataItem.uri.pathSegments.lastOrNull() ?: return last_sync
 
-            val privateKeyBase64 = cryptoPrefs.privateKeyBase64
+            val keyPair = getRSAKeys()
+            val privateKey = keyPair?.private
             val secret: String
             val algorithm: String
             val digits: Int
             val interval: Int
 
-            if (privateKeyBase64 != null) {
+            if (privateKey != null) {
                 try {
-                    val keyFactory = KeyFactory.getInstance("RSA")
-                    val privateKey = keyFactory.generatePrivate(
-                        PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyBase64))
-                    )
-                    secret = rsaDecrypt(Base64.getDecoder().decode(dataMap.getString("secret")!!), privateKey)
-                    algorithm = rsaDecrypt(Base64.getDecoder().decode(dataMap.getString("algorithm")!!), privateKey)
-                    digits = rsaDecrypt(Base64.getDecoder().decode(dataMap.getString("digits")!!), privateKey).toInt()
-                    interval = rsaDecrypt(Base64.getDecoder().decode(dataMap.getString("interval")!!), privateKey).toInt()
+                    val secretBytes = Base64.getDecoder().decode(dataMap.getString("secret")!!)
+                    val algorithmBytes = Base64.getDecoder().decode(dataMap.getString("algorithm")!!)
+                    val digitsBytes = Base64.getDecoder().decode(dataMap.getString("digits")!!)
+                    val intervalBytes = Base64.getDecoder().decode(dataMap.getString("interval")!!)
+
+                    secret = rsaDecrypt(secretBytes, privateKey)
+                    algorithm = rsaDecrypt(algorithmBytes, privateKey)
+                    digits = rsaDecrypt(digitsBytes, privateKey).toInt()
+                    interval = rsaDecrypt(intervalBytes, privateKey).toInt()
                 } catch (e: Exception) {
                     Log.e("DataEventUtils", "RSA decryption failed: ${e.message}")
                     return null
                 }
             } else {
-                // Fallback per messaggi non cifrati (retrocompatibilità)
-                Log.w("DataEventUtils", "Received unencrypted token data, skipping for security.")
+                Log.w("DataEventUtils", "Received token data but local RSA key unavailable, skipping.")
                 return null
             }
 
@@ -101,6 +99,7 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPr
 
 fun publishPublicKey(context: Context, publicKeyBase64: String) {
     try {
+
         val putDataMapReq = PutDataMapRequest.create("/public-key").apply {
             dataMap.putString("publicKey", publicKeyBase64)
             dataMap.putLong("timestamp", System.currentTimeMillis())

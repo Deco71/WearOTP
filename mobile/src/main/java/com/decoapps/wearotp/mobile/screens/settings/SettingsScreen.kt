@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -29,16 +33,25 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.R
 import com.decoapps.wearotp.mobile.data.PreferencesViewModel
+import com.decoapps.wearotp.mobile.utils.backup.createBackup
+import com.decoapps.wearotp.mobile.utils.backup.restoreBackup
 import com.decoapps.wearotp.mobile.data.syncData
 import com.decoapps.wearotp.mobile.drive.login
 import com.decoapps.wearotp.mobile.theme.ColorMode
@@ -47,6 +60,8 @@ import com.decoapps.wearotp.mobile.BuildConfig
 import com.decoapps.wearotp.mobile.drive.DriveServiceHelper
 import com.decoapps.wearotp.mobile.drive.DriveServiceHelper.Companion.getDriveService
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +75,35 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
     val coroutineScope = rememberCoroutineScope()
     val webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
 
+    // Stato per dialog inserimento chiave
+    var showKeyDialog by remember { mutableStateOf(false) }
+    var keyInput by remember { mutableStateOf("") }
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // Launcher per creare backup
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip"),
+        onResult = { uri ->
+            uri?.let {
+                val key = keyInput
+                createBackup(context, it, key)
+            }
+            keyInput = ""
+        }
+    )
+
+    // Launcher per ripristinare backup
+    val openDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            uri?.let {
+                val key = keyInput
+                restoreBackup(context, it, key)
+            }
+            keyInput = ""
+        }
+    )
+
     try {
         versionName = context.packageManager
             .getPackageInfo(context.packageName, 0).versionName
@@ -70,10 +114,10 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(id = R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_content_description))
                     }
                 }
             )
@@ -85,34 +129,34 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Theme",
+                    text = stringResource(id = R.string.theme_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ThemeOption(
-                    label = "System default",
-                    description = "Follows your device's light/dark setting",
+                    label = stringResource(id = R.string.system_default_label),
+                    description = stringResource(id = R.string.system_default_desc),
                     selected = currentColorMode == ColorMode.SYSTEM.toString(),
                     onClick = { preferencesViewModel.saveColorMode(ColorMode.SYSTEM) }
                 )
                 ThemeOption(
-                    label = "Light",
-                    description = "Always use light theme",
+                    label = stringResource(id = R.string.light_label),
+                    description = stringResource(id = R.string.light_desc),
                     selected = currentColorMode == ColorMode.LIGHT.toString(),
                     onClick = { preferencesViewModel.saveColorMode(ColorMode.LIGHT) }
                 )
                 ThemeOption(
-                    label = "Dark",
-                    description = "Always use dark theme",
+                    label = stringResource(id = R.string.dark_label),
+                    description = stringResource(id = R.string.dark_desc),
                     selected = currentColorMode == ColorMode.DARK.toString(),
                     onClick = { preferencesViewModel.saveColorMode(ColorMode.DARK) }
                 )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     ThemeOption(
-                        label = "Dynamic colors",
-                        description = "Use colors from your wallpaper (Android 12+)",
+                        label = stringResource(id = R.string.dynamic_colors_label),
+                        description = stringResource(id = R.string.dynamic_colors_desc),
                         selected = currentColorMode == ColorMode.DYNAMIC.toString(),
                         onClick = { preferencesViewModel.saveColorMode(ColorMode.DYNAMIC) }
                     )
@@ -121,7 +165,7 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Syncing",
+                    text = stringResource(id = R.string.syncing_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -133,20 +177,99 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
+                        Icon(
                         imageVector = Icons.Default.Sync,
-                        contentDescription = "Sync",
+                        contentDescription = stringResource(id = R.string.sync_now),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Sync now",
+                            text = stringResource(id = R.string.sync_now),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Fix problems by syncing your data manually.",
+                            text = stringResource(id = R.string.sync_now_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                HorizontalDivider()
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = stringResource(id = R.string.backup_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val currentDateTime = LocalDateTime.now()
+                            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
+                            val formattedDateTime = currentDateTime.format(formatter)
+                            val backupFileName = "wear-otp-backup_$formattedDateTime.zip"
+                            pendingAction = {
+                                createDocumentLauncher.launch(backupFileName)
+                            }
+                            showKeyDialog = true
+                        }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Save,
+                        contentDescription = stringResource(id = R.string.backup_content_description),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = stringResource(id = R.string.backup_create),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.backup_create_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                HorizontalDivider()
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            pendingAction = {
+                                openDocumentLauncher.launch(arrayOf("application/zip"))
+                            }
+                            showKeyDialog = true
+                        }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Restore,
+                        contentDescription = stringResource(id = R.string.backup_restore_content_description),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = stringResource(id = R.string.backup_restore),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.backup_restore_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -196,7 +319,7 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "About",
+                    text = stringResource(id = R.string.about_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -209,20 +332,20 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
+                        Icon(
                         painter = painterResource(id = R.drawable.github_invertocat_black_clearspace),
-                        contentDescription = "GitHub",
+                        contentDescription = stringResource(id = R.string.github_content_description),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "View on GitHub",
+                            text = stringResource(id = R.string.view_on_github),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "We are open source! Check us on GitHub.",
+                            text = stringResource(id = R.string.view_on_github_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -233,10 +356,49 @@ fun SettingsScreen(navController: NavController, authorizationLauncher: androidx
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (versionName != null) {
-                    Text(
-                        text = "Version $versionName",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                            Text(
+                                text = stringResource(id = R.string.version_format, versionName),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                }
+
+                // Dialog inserimento chiave
+                if (showKeyDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            showKeyDialog = false
+                            keyInput = ""
+                        },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(
+                                onClick = {
+                                    showKeyDialog = false
+                                    pendingAction?.invoke()
+                                }
+                            ) {
+                                Text(stringResource(id = R.string.confirm))
+                            }
+                        },
+                        dismissButton = {
+                            androidx.compose.material3.TextButton(
+                                onClick = {
+                                    showKeyDialog = false
+                                    keyInput = ""
+                                }
+                            ) {
+                                Text(stringResource(id = R.string.cancel))
+                            }
+                        },
+                        title = { Text(stringResource(id = R.string.backup_enter_key_title)) },
+                        text = {
+                            OutlinedTextField(
+                                value = keyInput,
+                                onValueChange = { keyInput = it },
+                                label = { Text(stringResource(id = R.string.backup_key_label)) },
+                                singleLine = true
+                            )
+                        }
                     )
                 }
             }

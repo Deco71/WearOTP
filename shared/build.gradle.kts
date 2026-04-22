@@ -33,7 +33,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.retrofit)
     implementation(libs.compose.material)
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
@@ -43,4 +42,5 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation(libs.argon2kt)
 }

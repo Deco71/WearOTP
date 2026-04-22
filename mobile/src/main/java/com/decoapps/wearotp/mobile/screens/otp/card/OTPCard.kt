@@ -28,6 +28,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.mobile.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -93,16 +95,16 @@ fun OTPCard(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.onDeleteDismissed() },
-            title = { Text("Remove Service") },
-            text = { Text("Are you sure you want to remove \"$deleteDialogServiceName\"?") },
+            title = { Text(stringResource(id = R.string.remove_service_title)) },
+            text = { Text(stringResource(id = R.string.remove_service_confirm, deleteDialogServiceName)) },
             confirmButton = {
                 TextButton(onClick = { viewModel.onDeleteConfirmed(service, onDelete) }) {
-                    Text("Confirm", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(id = R.string.confirm), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.onDeleteDismissed() }) {
-                    Text("Cancel")
+                    Text(stringResource(id = R.string.cancel))
                 }
             }
         )
@@ -147,7 +149,7 @@ fun OTPCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Key,
-                        contentDescription = "Service icon",
+                        contentDescription = stringResource(id = R.string.service_icon_content_description),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(24.dp)
                     )
@@ -163,7 +165,7 @@ fun OTPCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = service.issuer ?: "Unknown Service",
+                        text = service.issuer ?: stringResource(id = R.string.unknown_service),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1

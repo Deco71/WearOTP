@@ -26,6 +26,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.mobile.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +38,7 @@ import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
 import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
 import com.decoapps.wearotp.mobile.screens.otp.card.OTPCard
+// removed duplicate import
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,10 +46,10 @@ fun OTPScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("WearOTP") },
+                title = { Text(stringResource(id = R.string.app_name)) },
                 actions = {
                     IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(id = R.string.settings_title))
                     }
                 }
             )
@@ -55,7 +58,7 @@ fun OTPScreen(navController: NavController) {
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.AddOTP.route) }
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = "Add new OTP")
+                Icon(Icons.Outlined.Add, contentDescription = stringResource(id = R.string.add_new_otp))
             }
         },
         //snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -100,7 +103,7 @@ fun OTPList(modifier: Modifier) {
                 if (otpServices.isEmpty()) {
                     item {
                         Text(
-                            text = "No TOTP found. Please add one by using the add buton.",
+                            text = stringResource(id = R.string.no_totp_message),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(vertical = 24.dp)
                         )

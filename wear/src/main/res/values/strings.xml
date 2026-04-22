@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">WearOTP</string>
+    <string name="no_totp_message">No TOTP found. Please add one in your mobile app.</string>
+    <string name="open_mobile_once">Open the mobile app once to start automatic synchronization.</string>
+    <string name="last_sync_format">Last sync: %1$s</string>
+    <string name="unknown_service">Unknown service</string>
+    <string name="service_icon_content_description">Service icon</string>
 </resources>

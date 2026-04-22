@@ -3,6 +3,7 @@ package com.decoapps.wearotp.mobile.data
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import com.decoapps.wearotp.mobile.R
 import com.decoapps.wearotp.shared.crypto.TokenFileManager
 import com.decoapps.wearotp.shared.crypto.rsaEncrypt
 import com.decoapps.wearotp.shared.data.OTPService
@@ -109,7 +110,7 @@ fun syncData(context: Context) {
                 "Cannot sync: wearable public key not available."
             )
             Toast.makeText(context,
-                "Sync failed! Please open the smartwatch app at least once.",
+                context.getString(R.string.sync_failed_open_wear),
                 Toast.LENGTH_SHORT).show()
             return@fetchWearPublicKey
         }
@@ -128,13 +129,13 @@ fun syncData(context: Context) {
                         sendToWearable(context, service)
                     }
                     Toast.makeText(context,
-                        "Sync successful!",
+                        context.getString(R.string.sync_successful),
                         Toast.LENGTH_SHORT).show()
                 }
                 .addOnFailureListener {
                     Log.e("DataEventUtils", "Failed to send sync list to wearable: ${it.message}")
                     Toast.makeText(context,
-                        "Sync failed with generic error!",
+                        context.getString(R.string.sync_failed_generic),
                         Toast.LENGTH_SHORT).show()
                 }
         } catch (e: Exception) {

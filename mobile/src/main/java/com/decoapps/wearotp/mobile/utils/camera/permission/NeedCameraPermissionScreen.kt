@@ -17,6 +17,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.mobile.R
 
 @Composable
 fun NeedCameraPermissionScreen(requestPermission: () -> Unit, navController: NavController) {
@@ -33,18 +35,18 @@ fun NeedCameraPermissionScreen(requestPermission: () -> Unit, navController: Nav
     ) {
         Text(
             modifier = Modifier.padding(horizontal = 16.dp),
-            text = "Please grant camera permission to use the QR code scanning feature.",
+            text = stringResource(id = R.string.permission_prompt),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { openAppSettings(context) }) {
-            Text("Request permission")
+            Text(stringResource(id = R.string.request_permission))
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             modifier = Modifier.padding(horizontal = 16.dp),
-            text = "If you prefer, you can also add your OTP manually",
+            text = stringResource(id = R.string.prefer_add_manually),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -53,7 +55,7 @@ fun NeedCameraPermissionScreen(requestPermission: () -> Unit, navController: Nav
             navController.popBackStack()
             navController.navigate(Screen.AddOTPManually.route)
         }) {
-            Text("Add Manually")
+            Text(stringResource(id = R.string.add_manually))
         }
     }
 }

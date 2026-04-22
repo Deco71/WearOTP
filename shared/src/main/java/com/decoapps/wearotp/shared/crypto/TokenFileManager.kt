@@ -13,9 +13,9 @@ class TokenFileManager {
         fun getTokensDirectory(baseDir: File): File {
             return File(baseDir, "tokens")
         }
-    }
 
-    private val json = Json { prettyPrint = false }
+        val json = Json { prettyPrint = false }
+    }
 
     fun saveEncryptedToken(directory: File, service: OTPService): Boolean {
 

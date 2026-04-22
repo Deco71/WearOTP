@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WearOTP</string>
+    <string name="no_totp_message">Nessun TOTP trovato. Aggiungine uno nella tua app mobile.</string>
+    <string name="open_mobile_once">Apri l\'app mobile una volta per avviare la sincronizzazione automatica.</string>
+    <string name="last_sync_format">Ultima sincronizzazione: %1$s</string>
+    <string name="unknown_service">Servizio sconosciuto</string>
+    <string name="service_icon_content_description">Icona del servizio</string>
+</resources>
+
