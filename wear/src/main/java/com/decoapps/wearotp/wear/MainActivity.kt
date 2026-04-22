@@ -51,19 +51,14 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         val keysReady = mutableStateOf(false)
 
         lifecycleScope.launch {
-            val keyPair = getRSAKeys()
-            if (keyPair != null) {
+            getRSAKeys() { generatedKeyPair ->
                 val encoder = Base64.getEncoder()
-                val publicKeyBase64 = encoder.encodeToString(keyPair.public.encoded)
-                Log.d("CRYPTO", "RSA keys generated or retrieved.")
+                val publicKeyBase64 = encoder.encodeToString(generatedKeyPair.public.encoded)
 
                 // Publish public key to dataStore to make it available for the mobile app
                 publishPublicKey(this@MainActivity, publicKeyBase64)
-            } else {
-                Log.e("CRYPTO", "Failed to get or generate RSA keys.")
+                keysReady.value = true
             }
-
-            keysReady.value = true
         }
 
         setContent {
@@ -87,7 +82,7 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         }
     }
 
-    private suspend fun processDataItems(items: Iterable<DataItem>) {
+    private fun processDataItems(items: Iterable<DataItem>) {
         var uriToRemove: List<Uri> = emptyList()
         var lastSync: Long? = null
 

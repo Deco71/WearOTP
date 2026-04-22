@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.decoapps.wearotp.shared.crypto.TokenFileManager
-import com.decoapps.wearotp.shared.crypto.publicKeyId
 import com.decoapps.wearotp.shared.crypto.rsaDecrypt
 import com.decoapps.wearotp.shared.data.OTPService
 import com.google.android.gms.wearable.DataItem
@@ -49,24 +48,13 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File) : Long? {
             val algorithm: String
             val digits: Int
             val interval: Int
-            val expectedKeyId = keyPair?.public?.let { publicKeyId(it) }
-            val payloadKeyId = dataMap.getString("keyId")
 
             if (privateKey != null) {
-                if (expectedKeyId != null && payloadKeyId != null && payloadKeyId != expectedKeyId) {
-                    Log.e("DataEventUtils", "Key mismatch for token $id: payloadKeyId=$payloadKeyId, localKeyId=$expectedKeyId")
-                    return null
-                }
                 try {
                     val secretBytes = Base64.getDecoder().decode(dataMap.getString("secret")!!)
                     val algorithmBytes = Base64.getDecoder().decode(dataMap.getString("algorithm")!!)
                     val digitsBytes = Base64.getDecoder().decode(dataMap.getString("digits")!!)
                     val intervalBytes = Base64.getDecoder().decode(dataMap.getString("interval")!!)
-
-                    Log.d(
-                        "DataEventUtils",
-                        "Decrypting token $id with keyId=${expectedKeyId ?: "unknown"}, payloadKeyId=${payloadKeyId ?: "missing"}, sizes=[s:${secretBytes.size},a:${algorithmBytes.size},d:${digitsBytes.size},i:${intervalBytes.size}]"
-                    )
 
                     secret = rsaDecrypt(secretBytes, privateKey)
                     algorithm = rsaDecrypt(algorithmBytes, privateKey)
@@ -111,17 +99,10 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File) : Long? {
 
 fun publishPublicKey(context: Context, publicKeyBase64: String) {
     try {
-        val keyId = try {
-            val publicKey = getRSAKeys()?.public
-            if (publicKey != null) publicKeyId(publicKey) else null
-        } catch (_: Exception) {
-            null
-        }
 
         val putDataMapReq = PutDataMapRequest.create("/public-key").apply {
             dataMap.putString("publicKey", publicKeyBase64)
             dataMap.putLong("timestamp", System.currentTimeMillis())
-            if (keyId != null) dataMap.putString("keyId", keyId)
         }
         val request = putDataMapReq.asPutDataRequest().setUrgent()
 
